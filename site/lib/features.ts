@@ -33,21 +33,34 @@ const NO_FEATURES: TierFeatures = {
   assortmentControl: false, storePromotions: false, salesDashboard: false,
 };
 
-/** Fails CLOSED: an unknown or missing tier grants nothing. */
+/**
+ * Fails CLOSED: an unknown or missing tier grants nothing, including a zero range ceiling.
+ *
+ * `rangeCeiling` needs care. commercetools STRIPS null from custom-object values, so the
+ * "unlimited" tier comes back with the key absent — and spreading it over a fail-closed default of
+ * 0 silently gave the most permissive tier the most restrictive ceiling, blocking every range
+ * addition at PREMIUM. So for a tier that RESOLVED, an absent ceiling means unlimited (null); only
+ * a tier that failed to resolve gets 0.
+ */
 export const resolveTier = cache(async (tierKey: string | undefined): Promise<ProgrammeTier> => {
-  const empty: ProgrammeTier = {
+  const unresolved: ProgrammeTier = {
     label: tierKey ?? 'Unknown', labelFr: tierKey ?? 'Inconnu', description: '',
     monthlyFeeEur: 0, rangeCeiling: 0, features: { ...NO_FEATURES },
   };
-  if (!tierKey) return empty;
+  if (!tierKey) return unresolved;
   try {
     const res = await apiRoot.customObjects()
       .withContainerAndKey({ container: 'programme-tiers', key: tierKey })
       .get().execute();
-    const v = res.body.value as ProgrammeTier;
-    return { ...empty, ...v, features: { ...NO_FEATURES, ...(v.features ?? {}) } };
+    const v = res.body.value as Partial<ProgrammeTier>;
+    return {
+      ...unresolved,
+      ...v,
+      rangeCeiling: v.rangeCeiling ?? null,
+      features: { ...NO_FEATURES, ...(v.features ?? {}) },
+    };
   } catch {
-    return empty;
+    return unresolved;
   }
 });
 

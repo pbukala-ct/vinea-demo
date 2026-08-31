@@ -78,6 +78,18 @@ Conflating them put an English category bar next to French copy and would have b
 - **Promotions must exist on the per-store price.** A `was_price` on the national price alone is
   never seen, because a store context selects the channel price.
 
+## Product Search is eventually consistent
+
+Measured on this project: after a range change, `productSelection.productCount` is correct
+**immediately**, but `products/search` — which the PLP uses, because that is where facets and
+pagination come from — kept the old count for ~15s and caught up by ~30s.
+
+So a wine added in `/manage/gamme` does not appear on the shop the same second. The back office
+says so in plain French rather than pretending otherwise. Do not "fix" this by disabling framework
+caching: that was ruled out by comparing the two endpoints at the same instant.
+
+For a live demo: make the range change, then talk for a moment before switching to the storefront.
+
 ## The wrong-project footgun
 
 Next resolves `.env.local` only for keys **absent** from `process.env`, so any `CTP_*` exported in

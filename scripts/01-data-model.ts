@@ -327,7 +327,15 @@ async function verify() {
       const want = TIERS.map((t) => t.key).sort().join(',');
       if (keys !== want) return `${keys}, want ${want}`;
       const premium = objs.find((o: any) => o.key === 'PREMIUM');
-      return premium?.value?.features?.homeDelivery === true ? null : 'PREMIUM.features.homeDelivery is not true';
+      if (premium?.value?.features?.homeDelivery !== true) return 'PREMIUM.features.homeDelivery is not true';
+      // commercetools strips null, so PREMIUM's unlimited ceiling is stored as an ABSENT key.
+      // Readers must treat absent as unlimited — asserted here so the contract is explicit.
+      if ('rangeCeiling' in (premium.value ?? {}) && premium.value.rangeCeiling !== null) {
+        return `PREMIUM.rangeCeiling is ${premium.value.rangeCeiling}, expected absent/null (unlimited)`;
+      }
+      const essentiel = objs.find((o: any) => o.key === 'ESSENTIEL');
+      if (essentiel?.value?.rangeCeiling !== 0) return 'ESSENTIEL.rangeCeiling should be 0 (HQ-managed)';
+      return null;
     }],
     ['type price-promo (on standalone-price)', async () => {
       const t = await getByKey('types', 'price-promo');

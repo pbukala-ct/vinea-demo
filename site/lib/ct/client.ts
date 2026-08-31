@@ -36,7 +36,22 @@ function buildClient() {
         clientSecret: requireCtpEnv('CTP_CLIENT_SECRET'),
       },
     })
-    .withHttpMiddleware({ host: requireCtpEnv('CTP_API_URL') })
+    .withHttpMiddleware({
+      host: requireCtpEnv('CTP_API_URL'),
+      /**
+       * Opt commercetools calls out of Next's Data Cache.
+       *
+       * Every response here is store-scoped and request-scoped, so there is nothing to gain from
+       * caching it between requests, and a stale store/tier read would be actively wrong. React's
+       * `cache()` still de-duplicates within a single render.
+       *
+       * NOTE: this is hygiene, not a fix for range changes taking ~30s to appear on the PLP — that
+       * is commercetools' Product Search index being eventually consistent, measured below. Framework
+       * caching was ruled out by comparing selection.productCount (instant) with products/search.
+       */
+      httpClient: (url: string, options: RequestInit) =>
+        fetch(url, { ...options, cache: 'no-store' }),
+    })
     .build();
 }
 

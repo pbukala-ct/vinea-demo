@@ -52,7 +52,10 @@ export const TIERS: ProgrammeTier[] = [
     description: 'The retailer curates their own range, offers click & collect, and sees their own sales.',
     descriptionFr: 'Le caviste gère sa gamme, propose le retrait en magasin et suit ses ventes.',
     monthlyFeeEur: 49,
-    rangeCeiling: 120,
+    // Max SIZE of the range the caviste manages themselves. 400 not 120: the seeded CONNECTÉ
+    // stores already range 315-338, so a 120 ceiling would have put every one of them
+    // permanently over limit and made the back office's range gauge nonsense on arrival.
+    rangeCeiling: 400,
     features: { ...NONE, productSearch: true, clickCollect: true, assortmentControl: true, salesDashboard: true },
   },
   {
