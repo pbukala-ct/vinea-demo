@@ -7,3 +7,7 @@ node_modules
 # GENERATORS in git, not their output. (Flip this if the pack needs to be shareable.)
 data/catalogue/*.json
 data/images/
+
+# TypeScript / Next build artifacts
+*.tsbuildinfo
+.next/
