@@ -27,6 +27,19 @@ const CONCURRENCY = Number(ENV.CONCURRENCY ?? 12);
 const products: any[] = JSON.parse(readFileSync(join(DATA, 'products.json'), 'utf8'));
 const nationalPrices: any[] = JSON.parse(readFileSync(join(DATA, 'prices.json'), 'utf8'));
 const priceBySku = new Map(nationalPrices.map((p) => [p.sku, p.value.centAmount]));
+/**
+ * SKUs on promotion nationally, with their reference price.
+ *
+ * These have to be carried onto the per-store prices too. Price selection in a store context picks
+ * the CHANNEL price, so a was_price that exists only on the national price is never seen by a
+ * shopper — the strikethrough, the discount badge and the homepage's "coups de cœur" rail were all
+ * silently dead in every store.
+ */
+const promoBySku = new Map<string, { was: number; promoId: string | null }>(
+  nationalPrices
+    .filter((p) => p.custom?.fields?.was_price)
+    .map((p) => [p.sku, { was: p.custom.fields.was_price.centAmount, promoId: p.custom.fields.promo_id ?? null }]),
+);
 
 // ── deterministic helpers ─────────────────────────────────────────────────────
 function hash(s: string): number {
@@ -210,11 +223,27 @@ async function seedStorePrices() {
       const base = priceBySku.get(sku);
       if (base === undefined) continue;
       const euros = snapEur((base / 100) * (1 + s.priceOffsetPct / 100));
+      const cents = Math.round(euros * 100);
+      // carry the promotion through at the same relative discount, re-snapped for this store
+      const promo = promoBySku.get(sku);
+      const wasCents = promo ? Math.round(snapEur((promo.was / 100) * (1 + s.priceOffsetPct / 100)) * 100) : 0;
+      const onPromo = !!promo && wasCents > cents;
       drafts.push({
         key: `${sku}__${s.key}`,
         sku,
-        value: { currencyCode: 'EUR', centAmount: Math.round(euros * 100) },
+        value: { currencyCode: 'EUR', centAmount: cents },
         channel: { typeId: 'channel', key: priceChannelKey(s.key) },
+        ...(onPromo
+          ? {
+              custom: {
+                type: { typeId: 'type', key: 'price-promo' },
+                fields: {
+                  was_price: { currencyCode: 'EUR', centAmount: wasCents },
+                  ...(promo!.promoId ? { promo_id: promo!.promoId } : {}),
+                },
+              },
+            }
+          : {}),
       });
     }
   }
@@ -222,7 +251,10 @@ async function seedStorePrices() {
   const create = drafts.filter((d) => !live.has(d.key));
   const update = drafts.filter((d) => {
     const l = live.get(d.key);
-    return l && l.value?.centAmount !== d.value.centAmount;
+    if (!l) return false;
+    const wantWas = d.custom?.fields?.was_price?.centAmount ?? null;
+    const haveWas = l.custom?.fields?.was_price?.centAmount ?? null;
+    return l.value?.centAmount !== d.value.centAmount || haveWas !== wantWas;
   });
   console.log(`store prices: ${drafts.length} total, ${create.length} to create, ${update.length} to correct`);
   let done = 0;
@@ -234,9 +266,13 @@ async function seedStorePrices() {
   done = 0;
   await pool(update, CONCURRENCY, async (d) => {
     const l = live.get(d.key);
-    const r = await ct('POST', `/standalone-prices/key=${d.key}`, {
-      version: l.version, actions: [{ action: 'changeValue', value: d.value, staged: false }],
-    });
+    const actions: Record<string, unknown>[] = [{ action: 'changeValue', value: d.value, staged: false }];
+    if (d.custom) {
+      actions.push({ action: 'setCustomType', type: d.custom.type, fields: d.custom.fields });
+    } else if (l.custom) {
+      actions.push({ action: 'setCustomType' }); // clears the promo when it no longer applies
+    }
+    const r = await ct('POST', `/standalone-prices/key=${d.key}`, { version: l.version, actions });
     if (!r.ok) err(`price update ${d.key}`, r);
     if (++done % 500 === 0) console.log(`  … corrected ${done}/${update.length}`);
   });
@@ -362,6 +398,19 @@ async function verify() {
         const clash = [...lists.entries()].find(([, v]) => v === sig);
         if (clash) return `${s.key} has the same prices as ${clash[0]}`;
         lists.set(s.key, sig);
+      }
+      return null;
+    }],
+    ['promotions reach the per-store prices', async () => {
+      const promoSkus = [...promoBySku.keys()];
+      if (!promoSkus.length) return null;
+      for (const s of STORES.filter((x) => x.rangePct > 0)) {
+        const ranged = new Set(RANGES.get(s.key)!.map((p) => p.masterVariant.sku));
+        const keys = promoSkus.filter((sku) => ranged.has(sku)).map((sku) => `${sku}__${s.key}`);
+        if (!keys.length) continue;
+        const found = await queryIn('standalone-prices', 'key', keys);
+        const withWas = found.filter((p: any) => p.custom?.fields?.was_price?.centAmount > p.value.centAmount);
+        if (!withWas.length) return `${s.key} has ${keys.length} promo skus ranged but none carry a was_price`;
       }
       return null;
     }],

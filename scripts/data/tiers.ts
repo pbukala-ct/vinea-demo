@@ -38,11 +38,13 @@ export const TIERS: ProgrammeTier[] = [
   {
     key: 'ESSENTIEL',
     label: 'Essentiel', labelFr: 'Essentiel',
-    description: 'A shop window on the network. HQ curates the range and the pricing; the retailer sells.',
-    descriptionFr: "Une vitrine sur le réseau. Le siège gère la gamme et les prix ; le caviste vend.",
+    description: 'A shop window on the network: browse by category. HQ curates the range and the pricing.',
+    descriptionFr: "Une vitrine sur le réseau : navigation par famille. Le siège gère la gamme et les prix.",
     monthlyFeeEur: 0,
     rangeCeiling: 0,
-    features: { ...NONE, productSearch: true },
+    // Deliberately no search: the tier ladder has to be VISIBLE on the storefront, and a missing
+    // search box is the most immediate way to show a retailer what opting up would buy them.
+    features: { ...NONE },
   },
   {
     key: 'CONNECTE',

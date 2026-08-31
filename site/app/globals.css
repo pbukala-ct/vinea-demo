@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/*
+ * Cave Bellevin — a French caviste, not a supermarket.
+ *
+ * The palette is drawn from the product: bordeaux, cellar-dark ink, warm limestone cream, and a
+ * muted gold for accents. Display type is a Garamond-style serif because French wine retail is an
+ * editorial, typographic tradition; body copy stays on a neutral sans so specs and prices read
+ * cleanly. Deliberately NOT the default Tailwind blue/grey palette.
+ */
+@theme {
+  --color-ink: #1a1614;
+  --color-ink-soft: #453c37;
+  --color-muted: #6b615c;
+  --color-line: #e3dbd1;
+  --color-cream: #faf7f2;
+  --color-cream-deep: #f2ebe1;
+  --color-surface: #ffffff;
+
+  --color-bordeaux: #7b1e3b;
+  --color-bordeaux-dark: #5e1730;
+  --color-bordeaux-tint: #f7eef1;
+  --color-gold: #b8934a;
+  --color-gold-tint: #faf4e8;
+  --color-sage: #5c6b58;
+
+  --font-display: var(--font-cormorant), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+
+  --radius-card: 2px;
+}
+
+html { -webkit-font-smoothing: antialiased; }
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Small caps label used for eyebrows, facet headings, tier chips */
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.rule { border-top: 1px solid var(--color-line); }
+
+/* Focus ring — visible on the cream background, unlike the browser default */
+:where(a, button, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-bordeaux);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
