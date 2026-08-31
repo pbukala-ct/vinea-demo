@@ -1,0 +1,16 @@
+{
+  "name": "cave-bellevin-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Catalogue generation + seed pipeline for the Cave Bellevin commercetools demo.",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "project:settings": "node scripts/00-project-settings.ts",
+    "seed:model": "node scripts/01-data-model.ts",
+    "generate:catalogue": "node scripts/02-generate-catalogue.ts",
+    "seed:catalogue": "node scripts/03-seed-catalogue.ts",
+    "seed:network": "node scripts/04-seed-network.ts",
+    "verify": "node scripts/99-verify.ts"
+  }
+}
