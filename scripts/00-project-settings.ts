@@ -44,6 +44,23 @@ if (!actions.length) {
   if (!r.ok) err('update project', r);
 }
 
+// ---- search indexing ----
+// New projects ship with Product Projection Search DEACTIVATED; the PLP's facets and the
+// storefront's category listings both need it. Enabling triggers a reindex — free while the
+// catalogue is empty, slow once it isn't, so this belongs in phase 0.
+const sIdx = await ct('GET', '');
+const searchOn = sIdx.body?.searchIndexing?.products?.status;
+if (searchOn === 'Activated') {
+  console.log('product search indexing: already activated');
+} else {
+  console.log(`product search indexing: ${searchOn ?? 'unknown'} → activating`);
+  const r = await ct('POST', '', {
+    version: sIdx.body.version,
+    actions: [{ action: 'changeProductSearchIndexingEnabled', enabled: true }],
+  });
+  if (!r.ok) err('enable product search indexing', r);
+}
+
 // ---- verify (read back, do not trust the write response) ----
 const after = await ct('GET', '');
 if (!after.ok) { err('verify read', after); finish('project settings'); }
@@ -51,6 +68,12 @@ console.log('after :', JSON.stringify({
   name: after.body.name, languages: after.body.languages,
   countries: after.body.countries, currencies: after.body.currencies,
 }));
+
+const idxStatus = after.body?.searchIndexing?.products?.status;
+console.log('search    :', idxStatus);
+if (idxStatus !== 'Activated' && idxStatus !== 'Indexing') {
+  err('verify search indexing', { ok: false, status: 0, body: { errors: [{ message: `status ${idxStatus}, want Activated/Indexing` }] } });
+}
 
 if (after.body.name !== TARGET.name) err('verify name', { ok: false, status: 0, body: after.body.name });
 for (const [field, want] of [['languages', TARGET.languages], ['countries', TARGET.countries], ['currencies', TARGET.currencies]] as const) {

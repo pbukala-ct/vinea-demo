@@ -12,7 +12,7 @@
  * Run: npm run seed:model
  */
 import { ct, err, finish, getByKey, l, eur, all } from './lib/ct.ts';
-import { TAXONOMY, flatten, LEAF_KEYS } from './data/taxonomy.ts';
+import { TAXONOMY, flatten, LEAF_KEYS, ALL_KEYS } from './data/taxonomy.ts';
 import { TIERS } from './data/tiers.ts';
 
 const enumV = (vals: [string, string][]) => vals.map(([key, label]) => ({ key, label }));
@@ -151,6 +151,40 @@ async function ensureStoreProgrammeType() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 3b. custom type `price-promo` on standalone prices.
+//     Carries the reference "was" price so the PLP/PDP can show a strikethrough. Deliberately
+//     separate from the promotion ENGINE: live promotions are real Cart/Product Discounts that
+//     the retailer runs from /manage. This is reference-price display, not decisioning.
+// ─────────────────────────────────────────────────────────────────────────────
+const PRICE_PROMO_FIELDS = [
+  { name: 'was_price', label: l('Was price', 'Prix barré'), type: { name: 'Money' }, required: false },
+  { name: 'promo_id',  label: l('Promotion ID', 'ID de promotion'), type: { name: 'String' }, required: false },
+];
+
+async function ensurePricePromoType() {
+  const existing = await getByKey('types', 'price-promo');
+  if (!existing) {
+    const r = await ct('POST', '/types', {
+      key: 'price-promo',
+      name: l('Price promotion', 'Promotion de prix'),
+      description: l('Reference "was" price for strikethrough display on a standalone price.'),
+      resourceTypeIds: ['standalone-price'],
+      fieldDefinitions: PRICE_PROMO_FIELDS,
+    });
+    if (r.ok) console.log(`type price-promo: created with ${PRICE_PROMO_FIELDS.length} fields`); else err('create price-promo', r);
+    return;
+  }
+  const have = new Set((existing.fieldDefinitions ?? []).map((f: any) => f.name));
+  const missing = PRICE_PROMO_FIELDS.filter((f) => !have.has(f.name));
+  let version = existing.version;
+  for (const fieldDefinition of missing) {
+    const r = await ct('POST', '/types/key=price-promo', { version, actions: [{ action: 'addFieldDefinition', fieldDefinition }] });
+    if (r.ok) version = r.body.version; else err(`price-promo +${fieldDefinition.name}`, r);
+  }
+  console.log(`type price-promo: exists, +${missing.length} field(s)`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 4. category tree — parents before children
 // ─────────────────────────────────────────────────────────────────────────────
 async function ensureCategories() {
@@ -168,6 +202,32 @@ async function ensureCategories() {
     if (r.ok) created++; else err(`category ${node.key}`, r);
   }
   console.log(`categories: ${nodes.length} in tree, ${created} created, ${nodes.length - created} already present`);
+}
+
+/**
+ * Delete categories that are no longer in the taxonomy. Needed because the tree was reshaped after
+ * a first seed (see taxonomy.ts) and additive seeding would otherwise leave orphans in the nav.
+ * Refuses to delete anything that still has products assigned — losing a category assignment
+ * silently is far worse than an orphan node.
+ */
+async function pruneCategories() {
+  const want = new Set(ALL_KEYS);
+  const live = await all('categories');
+  const stale = live.filter((c: any) => !want.has(c.key));
+  if (!stale.length) { console.log('categories: no stale nodes'); return; }
+  // children first, so a parent is never deleted out from under one
+  stale.sort((a: any, b: any) => (b.ancestors?.length ?? 0) - (a.ancestors?.length ?? 0));
+  let deleted = 0;
+  for (const c of stale) {
+    // A `where` query, deliberately not the search index: search is eventually consistent and
+    // can be deactivated per project, so a stale/failed index must never authorise a delete.
+    const used = await ct('GET', `/product-projections?where=${encodeURIComponent(`categories(id="${c.id}")`)}&limit=0`);
+    const count = used.ok ? (used.body.total ?? 0) : -1;
+    if (count !== 0) { err(`prune ${c.key}`, { ok: false, status: 0, body: { errors: [{ message: `has ${count} product(s) — refusing to delete` }] } }); continue; }
+    const r = await ct('DELETE', `/categories/key=${c.key}?version=${c.version}`);
+    if (r.ok) deleted++; else err(`delete category ${c.key}`, r);
+  }
+  console.log(`categories: pruned ${deleted}/${stale.length} stale node(s)`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -246,7 +306,7 @@ async function verify() {
       const want = TIERS.map((x) => x.key).sort().join(',');
       return tierKeys === want ? null : `programme_tier enum ${tierKeys}, want ${want}`;
     }],
-    ['category tree (34 nodes, 28 leaves)', async () => {
+    [`category tree (${ALL_KEYS.length} nodes, ${LEAF_KEYS.length} leaves)`, async () => {
       const cats = await all('categories');
       const tree = flatten(TAXONOMY);
       if (cats.length !== tree.length) return `${cats.length} categories, want ${tree.length}`;
@@ -269,6 +329,14 @@ async function verify() {
       const premium = objs.find((o: any) => o.key === 'PREMIUM');
       return premium?.value?.features?.homeDelivery === true ? null : 'PREMIUM.features.homeDelivery is not true';
     }],
+    ['type price-promo (on standalone-price)', async () => {
+      const t = await getByKey('types', 'price-promo');
+      if (!t) return 'missing';
+      if (!t.resourceTypeIds?.includes('standalone-price')) return 'not bound to standalone-price';
+      const have = new Set((t.fieldDefinitions ?? []).map((f: any) => f.name));
+      const missing = PRICE_PROMO_FIELDS.filter((f) => !have.has(f.name)).map((f) => f.name);
+      return missing.length ? `missing ${missing.join(', ')}` : null;
+    }],
     ['zone fr + 2 shipping methods', async () => {
       if (!(await getByKey('zones', 'fr'))) return 'zone fr missing';
       for (const k of ['retrait-magasin', 'livraison-standard']) if (!(await getByKey('shipping-methods', k))) return `${k} missing`;
@@ -285,7 +353,9 @@ async function verify() {
 await ensureTaxCategory();
 await ensureProductType();
 await ensureStoreProgrammeType();
+await ensurePricePromoType();
 await ensureCategories();
+await pruneCategories();
 await ensureTiers();
 await ensureShipping();
 await verify();

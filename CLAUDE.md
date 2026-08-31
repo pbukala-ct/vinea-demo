@@ -55,9 +55,24 @@ Toulouse stays `DRAFT` deliberately: it gives the MC onboarding app a real job d
 deliberately (`lib/ct/*`, `store-selection*`, `features.ts`, `lib/ct/manage/*`, the seed harness)
 and rebuilt the UI shell. Do not copy its `[banner]` multiplexing, trade pillar or integrations.
 
-⚠️ **Never copy rows from the Metcash dataset.** It is commercial-in-confidence, and every image
-URL points at `cdn.metcash.media` with Australian appellations. We replicate the **schema and
-volumes**; the ~180 SKUs are a regenerated French wine/spirits catalogue.
+### Catalogue provenance (decided 2026-08-31)
+The catalogue IS derived from the Metcash Cellarbrations pack, on the owner's explicit call, with
+the product images hot-linked from `cdn.metcash.media`. Consequences to keep in mind:
+- `data/catalogue/` is **gitignored** — the transformed pack is never committed.
+- 296 of the 795 source products are dropped by `02-transform-catalogue.ts` because they read as
+  Australian bottle-shop, not French caviste (premix, seltzer, low-carb/mid-strength/Australian
+  beer, ginger beer, cask wine, Australian cider). 499 remain.
+- The category tree mirrors the catalogue's real shape (varietal-led), NOT an idealised French one:
+  522 of 795 products are Australian and only 27 French, so Bordeaux/Bourgogne/Armagnac/Pastis
+  nodes would have been empty. French labels, honest structure.
+- Product names and descriptions stay in English and still name Australian regions
+  ("McLaren Vale"). Acceptable for a generic opt-in-model demo; it is the one thing a French
+  prospect could notice. Regenerating names is the upgrade path if that ever matters.
+- **The image CDN is intercepted by Zscaler.** Node rejects it
+  (`UNABLE_TO_GET_ISSUER_CERT_LOCALLY`) while browsers and curl are fine. Set
+  `NODE_EXTRA_CA_CERTS` (see `.env.example`). This will bite Next.js server-side image
+  optimisation in phase 4 — plan on `unoptimized` images or an allowlisted proxy rather than
+  assuming `next/image` can fetch them.
 
 ## Repos (two, one commercetools Project)
 - **`vinea-demo`** (this repo) — storefront + BFF (`site/`), catalogue generation + seed (`scripts/`,

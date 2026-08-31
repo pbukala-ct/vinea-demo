@@ -8,7 +8,7 @@
   "scripts": {
     "project:settings": "node scripts/00-project-settings.ts",
     "seed:model": "node scripts/01-data-model.ts",
-    "generate:catalogue": "node scripts/02-generate-catalogue.ts",
+    "transform:catalogue": "node scripts/02-transform-catalogue.ts",
     "seed:catalogue": "node scripts/03-seed-catalogue.ts",
     "seed:network": "node scripts/04-seed-network.ts",
     "verify": "node scripts/99-verify.ts"
