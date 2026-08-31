@@ -1,0 +1,9 @@
+.env.local
+.mcp.json
+node_modules
+.next
+
+# Generated catalogue + imagery are large and reproducible from scripts/ — keep the
+# GENERATORS in git, not their output. (Flip this if the pack needs to be shareable.)
+data/catalogue/*.json
+data/images/

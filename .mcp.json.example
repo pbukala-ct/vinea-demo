@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "commerce-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@commercetools/commerce-mcp@latest",
+        "--tools=all",
+        "--isAdmin=true",
+        "--dynamicToolLoadingThreshold=450",
+        "--authType=client_credentials",
+        "--clientId=<CTP_CLIENT_ID>",
+        "--clientSecret=<CTP_CLIENT_SECRET>",
+        "--authUrl=https://auth.europe-west1.gcp.commercetools.com",
+        "--projectKey=cave-bellevin-demo",
+        "--apiUrl=https://api.europe-west1.gcp.commercetools.com"
+      ]
+    }
+  }
+}
