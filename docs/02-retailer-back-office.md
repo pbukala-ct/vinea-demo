@@ -17,6 +17,12 @@ Signing into Nantes (ESSENTIEL) shows padlocks on three of five tabs; Paris (PRE
 five. Locked surfaces stay **visible** with an explanation and a link to the tier comparison — a
 retailer should be able to see what upgrading buys.
 
+## Getting in
+
+`/manage/login`. From the storefront it is the **"Espace caviste"** link in the footer, under
+*Le réseau* — deliberately discreet, since shoppers never need it. The back office links back with
+"Voir la boutique" in its header.
+
 ## Auth (demo)
 
 Picking a cave at `/manage/login` **is** the sign-in; a jose-signed `bellevin-manage` cookie scopes

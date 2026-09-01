@@ -28,6 +28,9 @@ export async function Footer() {
             <li><Link href="/nos-cavistes" className="hover:text-cream">Nos cavistes</Link></li>
             <li><Link href="/choisir-ma-cave" className="hover:text-cream">Changer de cave</Link></li>
             <li><Link href="/devenir-caviste" className="hover:text-cream">Devenir caviste Bellevin</Link></li>
+            {/* The retailer's way in. Discreet on purpose — shoppers never need it — but present,
+                so the back office is reachable without typing a URL mid-demo. */}
+            <li><Link href="/manage/login" className="hover:text-cream">Espace caviste</Link></li>
           </ul>
         </div>
         <div>

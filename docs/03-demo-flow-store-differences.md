@@ -90,7 +90,7 @@ is absent** — ESSENTIEL is browse-by-category only. Not greyed out; not there.
 Worth saying out loud: posting a delivery order to a non-PREMIUM cave by hand returns **403**. The
 UI hiding a control is a courtesy; the tier is enforced in the API.
 
-**The back office differs too.** `/manage/login` → open **Paris**: dashboard with real revenue,
+**The back office differs too.** Footer → **"Espace caviste"** (or `/manage/login`) → open **Paris**: dashboard with real revenue,
 range control, promotions. Open **Nantes**: same URL, **padlocks** on dashboard, gamme and
 promotions, each explaining what upgrading gives.
 
@@ -107,7 +107,7 @@ custom objects. Change a tier in the Merchant Center and every screen above chan
 4. Bollinger URL at Nantes → **404**. Switch to Paris → 121,95 €. *(40 s)*
 5. St Agnes at **Bordeaux** → sold out, button disabled. Marseille → in stock. *(30 s)*
 6. Add a bottle at **Bordeaux** → `/commande` offers retrait only. Paris offers both. *(40 s)*
-7. `/manage/login` → **Paris** dashboard, then **Nantes** padlocks. *(40 s)*
+7. Footer → **Espace caviste** → **Paris** dashboard, then **Nantes** padlocks. *(40 s)*
 
 ---
 
