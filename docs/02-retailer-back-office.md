@@ -19,9 +19,13 @@ retailer should be able to see what upgrading buys.
 
 ## Getting in
 
-`/manage/login`. From the storefront it is the **"Espace caviste"** link in the footer, under
-*Le réseau* — deliberately discreet, since shoppers never need it. The back office links back with
-"Voir la boutique" in its header.
+`/manage/login`. Two ways in from the storefront:
+
+- **top bar, far right** — a small padlocked *Espace caviste* next to "Changer". This is a demo
+  affordance: it keeps the presenter one click away instead of typing a URL on stage.
+- **footer**, under *Le réseau* — where it would sit on its own in production.
+
+The back office links back with "Voir la boutique" in its header.
 
 ## Auth (demo)
 
