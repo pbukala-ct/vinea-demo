@@ -1,0 +1,37 @@
+# Netlify config for the Cave Bellevin demo.
+# The Next app lives in site/, so the build runs from there; Netlify auto-detects Next.js and
+# applies its Next runtime (SSR functions, image handling) without an explicit plugin entry.
+[build]
+  base = "site"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# Required environment variables, set in the Netlify UI or with `netlify env:set` — never committed:
+#   CTP_PROJECT_KEY   cave-bellevin-demo
+#   CTP_CLIENT_ID     <api client id>
+#   CTP_CLIENT_SECRET <api client secret>
+#   CTP_AUTH_URL      https://auth.europe-west1.gcp.commercetools.com
+#   CTP_API_URL       https://api.europe-west1.gcp.commercetools.com
+#   SESSION_SECRET    openssl rand -base64 32
+#
+# Do NOT set NODE_EXTRA_CA_CERTS: that is a local Zscaler workaround and the path does not exist
+# on a build runner.
+
+# Keep the demo out of search results.
+#
+# The catalogue is derived from a commercial-in-confidence pack and the product images are
+# hot-linked from a third party's CDN, so this deployment should be reachable by people given the
+# link and by nobody else. noindex is the floor, not a control — for real access control use
+# Netlify's site password / SSO, which is enforced at the edge.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type = "text/plain"

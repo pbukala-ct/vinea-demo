@@ -1,0 +1,3 @@
+# Demo deployment — not for indexing.
+User-agent: *
+Disallow: /
