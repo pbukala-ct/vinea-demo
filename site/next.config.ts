@@ -17,6 +17,26 @@ const nextConfig: NextConfig = {
     unoptimized: true,
     remotePatterns: [{ protocol: 'https', hostname: 'cdn.metcash.media' }],
   },
+
+  /**
+   * noindex, emitted by Next itself.
+   *
+   * netlify.toml's [[headers]] only reach STATIC assets — verified on the deployed site: the JS
+   * bundles carried X-Robots-Tag while every SSR HTML response did not, which is precisely
+   * backwards, since the HTML is what gets indexed. Setting it here covers SSR responses on any
+   * host, so it survives a move off Netlify too.
+   *
+   * This is a demo whose catalogue derives from a confidential pack and whose images hot-link a
+   * third party's CDN. It is a floor, not access control — use the host's password/SSO for that.
+   */
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
