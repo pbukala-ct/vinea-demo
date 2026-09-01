@@ -14,6 +14,7 @@ export interface AppOrder {
   createdAt: string;
   storeKey?: string;
   email?: string;
+  state?: string;
   shippingName?: string;
   total: number;
   taxIncluded?: number;
@@ -28,6 +29,7 @@ export function mapOrder(o: Order): AppOrder {
     createdAt: o.createdAt,
     storeKey: o.store?.key,
     email: o.customerEmail,
+    state: o.orderState,
     shippingName: o.shippingInfo?.shippingMethodName,
     total: o.totalPrice.centAmount,
     taxIncluded: o.taxedPrice?.totalTax?.centAmount,

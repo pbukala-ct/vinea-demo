@@ -111,6 +111,26 @@ custom objects. Change a tier in the Merchant Center and every screen above chan
 
 ---
 
+## Sample logins
+
+Header → **Connexion** (a cave must be chosen first — sign-in goes through the cave).
+Password for both: **`bellevin2026`**. The login page has one-click buttons so you never type them.
+
+| Account | Caves used | Shows |
+|---|---|---|
+| `camille.rousseau@example.fr` | **Paris + Lyon** | 7 orders, 2 caves, 579,02 € — one account, several independent caves |
+| `theo.marchand@example.fr` | Bordeaux | 3 orders, one cave |
+
+Camille is the interesting one: `/mon-compte` lists her orders from **two different cavistes** in one
+history, and labels which cave each came from.
+
+> "Independent retailers, but one customer identity. She doesn't hold an account per shop."
+
+Signing in also prefills checkout from her saved address, and an order placed while signed in
+appears in her account immediately.
+
+---
+
 ## Two things not to trip over
 
 - **A range change takes ~30 s to reach the shop.** commercetools' Product Search index is

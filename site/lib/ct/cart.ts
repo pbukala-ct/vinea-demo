@@ -146,6 +146,20 @@ export async function setShipping(
   ]);
 }
 
+/**
+ * Attach the signed-in shopper to the cart, so the resulting order shows up in their account.
+ * Without this an order placed while logged in would be anonymous and never appear in /mon-compte.
+ */
+export async function setCartCustomer(ctx: StoreContext, customerId: string, email: string): Promise<Cart | null> {
+  const cart = await getCart(ctx);
+  if (!cart) return null;
+  if (cart.customerId === customerId) return cart;
+  return update(ctx, cart, [
+    { action: 'setCustomerId', customerId },
+    { action: 'setCustomerEmail', email },
+  ]);
+}
+
 export async function setCustomerEmail(ctx: StoreContext, email: string): Promise<Cart | null> {
   const cart = await getCart(ctx);
   if (!cart) return null;

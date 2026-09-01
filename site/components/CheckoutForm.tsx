@@ -16,9 +16,17 @@ export interface FulfilmentOption {
  * ESSENTIEL caviste offers neither, so the form says so plainly instead of showing options that
  * would be rejected on submit.
  */
+export interface Prefill {
+  firstName: string; lastName: string; email: string;
+  streetName: string; postalCode: string; city: string;
+}
+
 export function CheckoutForm({
-  options, storeName, storeAddress, subtotal,
-}: { options: FulfilmentOption[]; storeName: string; storeAddress: string; subtotal: number }) {
+  options, storeName, storeAddress, subtotal, prefill,
+}: {
+  options: FulfilmentOption[]; storeName: string; storeAddress: string; subtotal: number;
+  prefill?: Prefill;
+}) {
   const router = useRouter();
   const [method, setMethod] = useState<FulfilmentOption['key'] | ''>(options[0]?.key ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -103,9 +111,9 @@ export function CheckoutForm({
       <fieldset>
         <legend className="eyebrow mb-3">Vos coordonnées</legend>
         <div className="grid sm:grid-cols-2 gap-3">
-          <Field name="firstName" label="Prénom" required />
-          <Field name="lastName" label="Nom" required />
-          <div className="sm:col-span-2"><Field name="email" label="E-mail" type="email" required /></div>
+          <Field name="firstName" label="Prénom" required defaultValue={prefill?.firstName} />
+          <Field name="lastName" label="Nom" required defaultValue={prefill?.lastName} />
+          <div className="sm:col-span-2"><Field name="email" label="E-mail" type="email" required defaultValue={prefill?.email} /></div>
         </div>
       </fieldset>
 
@@ -113,9 +121,9 @@ export function CheckoutForm({
         <fieldset>
           <legend className="eyebrow mb-3">Adresse de livraison</legend>
           <div className="grid sm:grid-cols-2 gap-3">
-            <div className="sm:col-span-2"><Field name="streetName" label="Adresse" required /></div>
-            <Field name="postalCode" label="Code postal" required />
-            <Field name="city" label="Ville" required />
+            <div className="sm:col-span-2"><Field name="streetName" label="Adresse" required defaultValue={prefill?.streetName} /></div>
+            <Field name="postalCode" label="Code postal" required defaultValue={prefill?.postalCode} />
+            <Field name="city" label="Ville" required defaultValue={prefill?.city} />
           </div>
         </fieldset>
       ) : (
@@ -145,12 +153,14 @@ export function CheckoutForm({
   );
 }
 
-function Field({ name, label, type = 'text', required }: { name: string; label: string; type?: string; required?: boolean }) {
+function Field({ name, label, type = 'text', required, defaultValue }: {
+  name: string; label: string; type?: string; required?: boolean; defaultValue?: string;
+}) {
   return (
     <label className="block">
       <span className="block text-xs text-muted mb-1">{label}{required ? ' *' : ''}</span>
       <input
-        name={name} type={type} required={required}
+        name={name} type={type} required={required} defaultValue={defaultValue}
         className="w-full border border-line bg-surface px-3 py-2.5 text-sm"
       />
     </label>

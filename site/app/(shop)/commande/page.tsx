@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getStoreContextOrNull } from '@/lib/session';
+import { getShopperSession } from '@/lib/auth/session';
+import { customerById } from '@/lib/ct/customer';
 import { getCart, mapCart } from '@/lib/ct/cart';
 import { CheckoutForm, type FulfilmentOption } from '@/components/CheckoutForm';
 import { money } from '@/lib/format';
@@ -14,6 +16,17 @@ export default async function Commande() {
   if (!raw || !raw.lineItems.length) redirect('/panier');
   const cart = mapCart(raw);
   const p = ctx.store.programme;
+
+  // prefill for a signed-in shopper — nobody should retype what we already know
+  const session = await getShopperSession();
+  const customer = session ? await customerById(session.customerId) : null;
+  const addr = customer?.addresses?.[0];
+  const prefill = customer
+    ? {
+        firstName: customer.firstName ?? '', lastName: customer.lastName ?? '', email: customer.email,
+        streetName: addr?.streetName ?? '', postalCode: addr?.postalCode ?? '', city: addr?.city ?? '',
+      }
+    : undefined;
 
   // Options are derived from the store's programme + tier — the same source the API re-checks.
   const options: FulfilmentOption[] = [];
@@ -38,6 +51,7 @@ export default async function Commande() {
 
       <div className="mt-8 grid lg:grid-cols-[1fr_340px] gap-10 items-start">
         <CheckoutForm
+          prefill={prefill}
           options={options}
           storeName={ctx.store.name}
           storeAddress={`${p.street}, ${p.postalCode} ${p.city}`}

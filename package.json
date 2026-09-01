@@ -15,6 +15,7 @@
     "seed:network": "node scripts/04-seed-network.ts",
     "verify": "node scripts/99-verify.ts",
     "seed:orders": "node scripts/05-seed-orders.ts",
-    "dev:manage-cookie": "node scripts/dev/mint-manage-cookie.ts"
+    "dev:manage-cookie": "node scripts/dev/mint-manage-cookie.ts",
+    "seed:customers": "node scripts/06-seed-customers.ts"
   }
 }

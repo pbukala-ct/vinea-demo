@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getStoreContextOrNull } from '@/lib/session';
-import { getCart, setShipping, setCustomerEmail } from '@/lib/ct/cart';
+import { getCart, setShipping, setCustomerEmail, setCartCustomer } from '@/lib/ct/cart';
 import { placeOrder } from '@/lib/ct/orders';
+import { getShopperSession } from '@/lib/auth/session';
 
 /**
  * Place the order. Fulfilment options are validated against the store's TIER here, not just hidden
@@ -42,6 +43,9 @@ export async function POST(req: Request) {
   }
 
   try {
+    // a signed-in shopper's order must be theirs, or it never reaches /mon-compte
+    const session = await getShopperSession();
+    if (session) await setCartCustomer(ctx, session.customerId, session.email);
     await setCustomerEmail(ctx, email);
     const withShipping = await setShipping(ctx, method, address);
     if (!withShipping) return NextResponse.json({ error: 'cart_gone' }, { status: 409 });
