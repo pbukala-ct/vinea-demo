@@ -1,10 +1,20 @@
-# Netlify config for the Cave Bellevin demo.
-# The Next app lives in site/, so the build runs from there; Netlify auto-detects Next.js and
-# applies its Next runtime (SSR functions, image handling) without an explicit plugin entry.
+# Netlify config for the Cave Bellevin demo. The Next app lives in site/.
 [build]
   base = "site"
   command = "npm run build"
   publish = ".next"
+
+# The Next.js runtime MUST be declared explicitly.
+#
+# Netlify's framework auto-detection does not fire when `base` points at a subdirectory, so the
+# first deploy ran `next build` and then published the raw .next directory as a static site: no
+# index.html at the root, no SSR functions, and a Netlify 404 on every path. The tell was that
+# /BUILD_ID and /build-manifest.json returned 200 — files that only exist INSIDE .next.
+#
+# Netlify installs plugins declared here automatically; the version is left unpinned so it stays
+# matched to the Next major.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [build.environment]
   NODE_VERSION = "24"
